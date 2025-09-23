@@ -2,6 +2,7 @@ package com.example.WeatherRequestAPI.Service;
 
 import com.example.WeatherRequestAPI.DTO.WeatherResponseDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -10,6 +11,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WeatherService {
 
     private final WebClient webClient;
+
+    @Autowired
+    private RateLimiterService rateLimiterService;
 
     ObjectMapper mapper;
 
@@ -23,6 +27,11 @@ public class WeatherService {
 
     @Cacheable(value = "weather", key = "#city")
     public WeatherResponseDTO getWeather(String city) throws Exception {
+
+        if (!rateLimiterService.isAllowed(city, 1, 60)) {
+            throw new RuntimeException("Rate limit exceeded for city: " + city);
+        }
+
         System.out.println("Fetching weather from API for: " + city);
         String url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/" + city + "/today?key=" + apiKey;
 

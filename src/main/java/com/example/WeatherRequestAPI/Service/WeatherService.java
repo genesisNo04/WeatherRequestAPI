@@ -25,12 +25,16 @@ public class WeatherService {
         this.mapper = mapper;
     }
 
-    @Cacheable(value = "weather", key = "#city")
     public WeatherResponseDTO getWeather(String city) throws Exception {
-
-        if (!rateLimiterService.isAllowed(city, 1, 60)) {
+        if (!rateLimiterService.isAllowed(city, 5, 60)) {
             throw new RuntimeException("Rate limit exceeded for city: " + city);
         }
+
+        return fetchWeather(city);
+    }
+
+    @Cacheable(value = "weather", key = "#city")
+    public WeatherResponseDTO fetchWeather(String city) throws Exception {
 
         System.out.println("Fetching weather from API for: " + city);
         String url = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/" + city + "/today?key=" + apiKey;

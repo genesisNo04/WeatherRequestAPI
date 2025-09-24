@@ -15,14 +15,15 @@ public class RateLimiterService {
     }
 
     public boolean isAllowed(String key, int limit, int windowSeconds) {
+        // For now: global key, later you can change "rate:global" -> "rate:" + key
         String redisKey = "rate:global";
 
         Long count = redisTemplate.opsForValue().increment(redisKey);
 
-        if (count == 1 && count == 1L) {
-            redisTemplate.expire(
-                    redisKey, Duration.ofSeconds(windowSeconds)
-            );
+        System.out.println("Count for key " + redisKey + ": " + count);
+
+        if (count != null && count == 1) {
+            redisTemplate.expire(redisKey, Duration.ofSeconds(windowSeconds));
         }
 
         return count != null && count <= limit;
